@@ -87,7 +87,11 @@ function extractCerts() {
   throw new Error('No valid Apple certificates found in environment variables or certs/ folder.');
 }
 
-export async function generatePass(coupon: any, restaurant: any): Promise<Buffer> {
+export async function generatePass(
+  coupon: any,
+  restaurant: any,
+  explicitBaseUrl?: string
+): Promise<Buffer> {
   const modelDir = path.join(process.cwd(), 'src/lib/pass/pass.model');
   const certificates = extractCerts();
 
@@ -103,7 +107,7 @@ export async function generatePass(coupon: any, restaurant: any): Promise<Buffer
     }
   );
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://micrositedemo.vercel.app';
+  const baseUrl = explicitBaseUrl || process.env.NEXT_PUBLIC_BASE_URL || 'https://micrositedemo.vercel.app';
   const redeemUrl = `${baseUrl}/redeem/${coupon.id}`;
 
   pass.headerFields.push({

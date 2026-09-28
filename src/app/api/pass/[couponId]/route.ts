@@ -34,8 +34,15 @@ export async function GET(
 
     const restaurant = Array.isArray(coupon.restaurants) ? coupon.restaurants[0] : coupon.restaurants;
     
+    // Automatically detect the live host from the incoming request (e.g. micrositedemo.vercel.app or custom domain)
+    const host = req.headers.get('x-forwarded-host') || req.headers.get('host');
+    const proto = req.headers.get('x-forwarded-proto') || 'https';
+    const dynamicBaseUrl = host && !host.includes('localhost') 
+      ? `${proto}://${host}` 
+      : (process.env.NEXT_PUBLIC_BASE_URL || 'https://micrositedemo.vercel.app');
+
     try {
-      const passBuffer = await generatePass(coupon, restaurant);
+      const passBuffer = await generatePass(coupon, restaurant, dynamicBaseUrl);
 
       return new Response(new Uint8Array(passBuffer), {
         status: 200,
