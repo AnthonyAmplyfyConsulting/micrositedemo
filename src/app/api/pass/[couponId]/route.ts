@@ -21,7 +21,8 @@ export async function GET(
       .single();
 
     if (couponError || !coupon) {
-      return NextResponse.json({ error: 'Coupon not found' }, { status: 404 });
+      console.error('Coupon fetch error:', couponError);
+      return NextResponse.json({ error: 'Coupon not found in database' }, { status: 404 });
     }
 
     const now = new Date();
@@ -32,17 +33,30 @@ export async function GET(
     }
 
     const restaurant = Array.isArray(coupon.restaurants) ? coupon.restaurants[0] : coupon.restaurants;
-    const passBuffer = await generatePass(coupon, restaurant);
+    
+    try {
+      const passBuffer = await generatePass(coupon, restaurant);
 
-    return new Response(new Uint8Array(passBuffer), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/vnd.apple.pkpass',
-        'Content-Disposition': `attachment; filename="coupon-${coupon.pass_serial || coupon.id}.pkpass"`,
-      },
-    });
-  } catch (error) {
-    console.error('Pass generation API error:', error);
-    return NextResponse.json({ error: 'Failed to generate pass' }, { status: 500 });
+      return new Response(new Uint8Array(passBuffer), {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/vnd.apple.pkpass',
+          'Content-Disposition': `attachment; filename="coupon-${coupon.pass_serial || coupon.id}.pkpass"`,
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+        },
+      });
+    } catch (passErr: any) {
+      console.error('Pass generation internal error:', passErr);
+      return NextResponse.json({ 
+        error: 'Failed to generate pass',
+        details: passErr?.message || String(passErr)
+      }, { status: 500 });
+    }
+  } catch (error: any) {
+    console.error('Pass route top-level error:', error);
+    return NextResponse.json({ 
+      error: 'Internal server error',
+      details: error?.message || String(error)
+    }, { status: 500 });
   }
 }
