@@ -1,0 +1,16 @@
+{
+  "formatVersion": 1,
+  "passTypeIdentifier": "pass.com.amplyfy.rewards",
+  "teamIdentifier": "427XC628PV",
+  "organizationName": "Amplyfy",
+  "description": "Amplyfy Restaurant Rewards Pass",
+  "foregroundColor": "rgb(255, 255, 255)",
+  "backgroundColor": "rgb(255, 91, 22)",
+  "labelColor": "rgb(255, 240, 200)",
+  "coupon": {
+    "primaryFields": [],
+    "secondaryFields": [],
+    "auxiliaryFields": [],
+    "backFields": []
+  }
+}
