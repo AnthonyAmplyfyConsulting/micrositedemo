@@ -16,10 +16,7 @@ export default function WalletView({
   couponId,
   prize
 }: WalletViewProps) {
-  const handleAppleWallet = () => {
-    // Initiate direct download of the generated .pkpass
-    window.location.href = `/api/pass/${couponId}`
-  }
+  const passUrl = `/api/pass/${couponId}`
 
   return (
     <AnimatePresence>
@@ -54,11 +51,11 @@ export default function WalletView({
               Add your <span className="font-bold text-neutral-800">{prize}% OFF</span> pass to Apple Wallet to redeem at your table.
             </p>
 
-            {/* Official Apple Wallet Badge Style Button */}
+            {/* Official Apple Wallet Link - Anchor tag for native iOS PassKit interception */}
             <div className="space-y-3">
-              <button
-                onClick={handleAppleWallet}
-                className="w-full h-14 bg-black hover:bg-neutral-900 active:scale-[0.98] text-white rounded-2xl flex items-center justify-center gap-3 px-5 transition-all shadow-lg shadow-black/10 border border-neutral-800"
+              <a
+                href={passUrl}
+                className="w-full h-14 bg-black hover:bg-neutral-900 active:scale-[0.98] text-white rounded-2xl flex items-center justify-center gap-3 px-5 transition-all shadow-lg shadow-black/10 border border-neutral-800 select-none text-decoration-none no-underline cursor-pointer"
               >
                 {/* Official Apple Logo SVG */}
                 <svg className="w-6 h-6 fill-current" viewBox="0 0 170 170">
@@ -72,7 +69,7 @@ export default function WalletView({
                     Apple Wallet
                   </span>
                 </div>
-              </button>
+              </a>
             </div>
 
             <p className="text-[11px] text-neutral-400 mt-4 font-normal">

@@ -41,7 +41,7 @@ export async function GET(
         status: 200,
         headers: {
           'Content-Type': 'application/vnd.apple.pkpass',
-          'Content-Disposition': `attachment; filename="coupon-${coupon.pass_serial || coupon.id}.pkpass"`,
+          'Content-Disposition': 'inline',
           'Cache-Control': 'no-store, no-cache, must-revalidate',
         },
       });
