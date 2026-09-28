@@ -51,21 +51,46 @@ export default function WalletView({
               Add your <span className="font-bold text-neutral-800">{prize}% OFF</span> pass to Apple Wallet to redeem at your table.
             </p>
 
-            {/* Official Apple Wallet Link - Anchor tag for native iOS PassKit interception */}
-            <div className="space-y-3">
+            {/* Pixel-Perfect Official Apple Wallet Badge */}
+            <div className="flex justify-center">
               <a
                 href={passUrl}
-                className="w-full h-14 bg-black hover:bg-neutral-900 active:scale-[0.98] text-white rounded-2xl flex items-center justify-center gap-3 px-5 transition-all shadow-lg shadow-black/10 border border-neutral-800 select-none text-decoration-none no-underline cursor-pointer"
+                aria-label="Add to Apple Wallet"
+                className="inline-flex items-center justify-center gap-3.5 bg-black hover:bg-neutral-900 active:scale-[0.98] text-white rounded-[14px] px-6 py-3 transition-all shadow-md shadow-black/15 border border-[#333] cursor-pointer no-underline select-none"
+                style={{
+                  minWidth: '220px',
+                  height: '56px',
+                }}
               >
-                {/* Official Apple Logo SVG */}
-                <svg className="w-6 h-6 fill-current" viewBox="0 0 170 170">
+                {/* Official Apple Logo SVG with proper vertical alignment */}
+                <svg
+                  className="w-6 h-7 fill-white shrink-0 -translate-y-0.5"
+                  viewBox="0 0 170 170"
+                  aria-hidden="true"
+                >
                   <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.7-3.04-7.58-7.77-11.64-14.19-5.99-9.45-10.82-20.19-14.49-32.22-3.67-12.02-5.51-23.47-5.51-34.34 0-14.12 3.5-25.76 10.51-34.91 7.01-9.15 15.93-13.89 26.77-14.22 4.9.11 10.37 1.34 16.42 3.69 6.04 2.34 9.87 3.56 11.47 3.65 1.5.09 5.37-1.19 11.61-3.83 6.24-2.65 11.75-3.83 16.53-3.56 12.63.78 22.38 5.62 29.25 14.52-11.09 6.74-16.53 16.19-16.32 28.36.21 9.56 3.83 17.61 10.85 24.13 7.02 6.53 15.34 10.43 24.96 11.72-2.34 6.74-5.32 13.8-8.94 21.18zM119.22 31.84c0-7.39 2.65-14.54 7.96-21.46 5.31-6.91 12.04-11.08 20.18-12.51.53 2.13.8 4.26.8 6.38 0 7.34-2.77 14.7-8.3 22.08-5.54 7.39-12.42 11.6-20.64 12.64v-7.13z" />
                 </svg>
-                <div className="text-left leading-none">
-                  <span className="block text-[10px] text-white/70 uppercase font-semibold tracking-wider">
+
+                {/* Typography matching official Apple Wallet badge specifications */}
+                <div className="flex flex-col text-left justify-center leading-none">
+                  <span
+                    className="text-[11px] text-white/90 uppercase tracking-[0.06em]"
+                    style={{
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                      fontWeight: 500,
+                      marginBottom: '2px',
+                    }}
+                  >
                     Add to
                   </span>
-                  <span className="text-[17px] font-semibold tracking-tight">
+                  <span
+                    className="text-[18px] text-white tracking-[-0.02em]"
+                    style={{
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                      fontWeight: 600,
+                      letterSpacing: '-0.3px',
+                    }}
+                  >
                     Apple Wallet
                   </span>
                 </div>
