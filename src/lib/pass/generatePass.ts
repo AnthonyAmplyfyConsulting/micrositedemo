@@ -103,6 +103,9 @@ export async function generatePass(coupon: any, restaurant: any): Promise<Buffer
     }
   );
 
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://micrositedemo.vercel.app';
+  const redeemUrl = `${baseUrl}/redeem/${coupon.id}`;
+
   pass.headerFields.push({
     key: 'brand',
     label: 'REWARD',
@@ -133,12 +136,18 @@ export async function generatePass(coupon: any, restaurant: any): Promise<Buffer
     value: expiresDate,
   });
 
+  // Back Fields - Apple automatically converts raw URLs into tappable links on iOS
   pass.backFields.push(
+    {
+      key: 'redeem_link',
+      label: 'STAFF REDEEM LINK',
+      value: `Tap here to redeem: ${redeemUrl}`,
+    },
     {
       key: 'instructions',
       label: 'HOW TO REDEEM',
       value:
-        'Show this pass to your server or cashier when ordering. Staff will scan the QR code to validate and enter their staff PIN to apply the discount.',
+        'Show this pass to your server or bartender. Staff can tap the Staff Redeem Link above or scan the QR code on the front to enter their staff PIN.',
     },
     {
       key: 'terms',
@@ -149,14 +158,12 @@ export async function generatePass(coupon: any, restaurant: any): Promise<Buffer
     }
   );
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-  const redeemUrl = `${baseUrl}/redeem/${coupon.id}`;
-
+  // Front QR Code - Barcode altText shows the tap instruction
   pass.setBarcodes({
     format: 'PKBarcodeFormatQR',
     message: redeemUrl,
     messageEncoding: 'iso-8859-1',
-    altText: `Scan or tap to redeem`,
+    altText: `Tap (i) top right to redeem or scan QR`,
   });
 
   return pass.getAsBuffer();
