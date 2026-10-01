@@ -1,36 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Amplyfy Restaurant Rewards
 
-## Getting Started
+A mobile-first rewards microsite with four games: Spin the Wheel, Pick Your Card, Lucky Dice, and Scratch & Reveal. Every game uses the existing 5%, 10%, or 15% server-selected reward.
 
-First, run the development server:
+## Run locally
 
-```bash
+```sh
+npm ci
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- `/play/amplyfy` uses the real reward, claim, and Wallet APIs. The root URL redirects here.
+- `/play/[slug]` uses the matching restaurant slug in Supabase.
+- `/preview` is an isolated interactive preview. It does not save contacts or issue real Wallet passes.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Existing integrations
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Keep the existing deployment environment variables and Apple signing configuration:
 
-## Learn More
+| Integration | Configuration |
+| --- | --- |
+| Supabase API routes | `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` |
+| Public Supabase client, if used | `NEXT_PUBLIC_SUPABASE_ANON_KEY` |
+| Optional GoHighLevel contact sync | `GHL_API_KEY`, `GHL_LOCATION_ID` |
+| Apple PEM signing configuration | `APPLE_WWDR_CERT_BASE64`, `APPLE_SIGNER_CERT_BASE64`, `APPLE_SIGNER_KEY_BASE64` |
+| Alternative Apple P12 configuration | `APPLE_PASS_P12_BASE64`, `APPLE_WWDR_BASE64`, `APPLE_PASS_CERT_PASSWORD` |
+| Optional fallback redemption URL | `NEXT_PUBLIC_BASE_URL` |
 
-To learn more about Next.js, take a look at the following resources:
+The existing local `certs/` signing fallback is also supported. Signing certificates, private keys, and environment files must stay out of Git. The existing pass type and team identifiers remain in `src/lib/pass/pass.model/pass.json`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+The flow remains:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. `/api/spin` records the server-selected reward in Supabase and returns its spin ID.
+2. The chosen game reveals that same reward.
+3. `/api/claim` receives the original spin ID and creates the coupon and optional GHL contact.
+4. The official Add to Apple Wallet badge links to `/api/pass/[couponId]`, which signs the existing pass template with the configured certificates.
 
-## Deploy on Vercel
+Claiming no longer requests a second spin. A failed reward request can retry with the same session token. No Supabase schema changes are required.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Mobile behavior
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The interface supports portrait and landscape phones, touch gestures, safe-area insets, and reduced motion. Name and phone inputs use 16px text and autofill; the reward form scrolls within the visual viewport when the keyboard opens. Only one reward screen is mounted at a time.
+
+Three.js renders the wheel, cards, and dice. Cannon records physically simulated dice throws that match the server reward. Decorative geometry is batched, pixel density is capped, idle scenes avoid unnecessary rendering, and inactive scenes release their graphics resources.
+
+## Validation for this revision
+
+- Production build and TypeScript checks.
+- Live Supabase connectivity: one anonymous spin and an idempotent retry, with no coupon or GHL contact created.
+- ESLint checks for the changed UI and game files.
+- Mobile viewport checks at 320×568, 375×667, 390×844, 430×932, 736×390, and 852×393.
+- All four games through the actual spin, claim, and pass API handlers using a local Supabase REST fixture.
+- Card tapping, dice swiping, scratch gestures, and landscape control placement using touch events.
+- Original winning spin/coupon consistency, duplicate-claim rejection, pass manifest hashes, and CMS signatures using temporary test certificates.
+
+Local fixture checks do not establish trust in a live Apple signing certificate. Installing a pass on an iPhone must be checked against the deployed site's existing credentials.

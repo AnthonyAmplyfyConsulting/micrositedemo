@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Barlow_Condensed, DM_Sans } from 'next/font/google'
 import './globals.css'
 
@@ -16,8 +16,14 @@ const dmSans = DM_Sans({
 
 export const metadata: Metadata = {
   title: 'Amplyfy • Play for your next bite',
-  description: 'Spin the wheel for a chance to win an offer on your next order.',
-  themeColor: '#ff5b16',
+  description: 'Choose a game and win an offer on your next order.',
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  themeColor: '#21120e',
 }
 
 export default function RootLayout({

@@ -6,6 +6,7 @@ interface ClaimFormProps {
   isOpen: boolean
   onClose: () => void
   prize: number
+  spinId: string
   onClaimed: (couponId: string, name: string) => void
   restaurantName?: string
 }
@@ -14,6 +15,7 @@ export default function ClaimForm({
   isOpen,
   onClose,
   prize,
+  spinId,
   onClaimed,
   restaurantName = 'Amplyfy'
 }: ClaimFormProps) {
@@ -46,22 +48,12 @@ export default function ClaimForm({
     setIsSubmitting(true)
 
     try {
-      // Create session and claim
-      const spinRes = await fetch('/api/spin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          restaurantSlug: 'amplyfy',
-          sessionToken: crypto.randomUUID()
-        })
-      })
-      const spinData = await spinRes.json()
-
+      // Claim the exact result the game revealed. Do not draw a second prize.
       const claimRes = await fetch('/api/claim', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          spinId: spinData.spinId,
+          spinId,
           name: cleanName,
           phone: cleanPhone,
           smsConsent
@@ -69,7 +61,7 @@ export default function ClaimForm({
       })
       const claimData = await claimRes.json()
 
-      if (claimData.couponId) {
+      if (claimRes.ok && claimData.couponId) {
         onClaimed(claimData.couponId, cleanName)
       } else {
         setError(claimData.error || 'Something went wrong. Please try again.')
@@ -85,7 +77,7 @@ export default function ClaimForm({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="reward-overlay fixed inset-0 z-50 flex items-center justify-center p-4">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -99,13 +91,13 @@ export default function ClaimForm({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.94, y: 20 }}
             transition={{ type: 'spring', damping: 26, stiffness: 320 }}
-            className="relative w-full max-w-sm rounded-[36px] bg-white shadow-2xl overflow-hidden z-10 border border-black/5"
+            className="reward-dialog relative w-full max-w-sm rounded-[36px] bg-white shadow-2xl overflow-hidden z-10 border border-black/5"
           >
             {/* Close Button */}
             {!isSubmitting && (
               <button
                 onClick={onClose}
-                className="absolute top-4 right-4 z-20 w-8 h-8 rounded-full bg-black/10 hover:bg-black/20 text-white flex items-center justify-center transition-all active:scale-95"
+                className="absolute top-4 right-4 z-20 w-11 h-11 rounded-full bg-black/10 hover:bg-black/20 text-white flex items-center justify-center transition-all active:scale-95"
                 aria-label="Close"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
@@ -125,7 +117,7 @@ export default function ClaimForm({
               <div className="absolute -top-12 -left-12 w-44 h-44 rounded-full bg-white/10 blur-xl pointer-events-none" />
 
               <span className="inline-block text-[11px] font-bold tracking-[0.2em] text-white/85 uppercase mb-1">
-                THAT'S A TASTY WIN!
+                THAT&apos;S A TASTY WIN!
               </span>
 
               <div className="flex items-center justify-center font-display text-[76px] font-black leading-none my-1 tracking-tight">
@@ -156,21 +148,23 @@ export default function ClaimForm({
 
               <div className="space-y-3.5">
                 <div>
-                  <label className="block text-[12px] font-semibold text-neutral-700 mb-1 ml-0.5">
+                  <label htmlFor="guest-name" className="block text-[12px] font-semibold text-neutral-700 mb-1 ml-0.5">
                     Your Name
                   </label>
                   <input
+                    id="guest-name"
                     type="text"
+                    autoComplete="given-name"
                     required
                     placeholder="First Name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full h-12 px-4 rounded-xl bg-neutral-50 border border-neutral-200 text-neutral-900 text-[15px] focus:outline-none focus:ring-2 focus:ring-[#ff5b16] focus:bg-white transition-all placeholder:text-neutral-400"
+                    className="w-full h-12 px-4 rounded-xl bg-neutral-50 border border-neutral-200 text-neutral-900 text-base focus:outline-none focus:ring-2 focus:ring-[#ff5b16] focus:bg-white transition-all placeholder:text-neutral-400"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[12px] font-semibold text-neutral-700 mb-1 ml-0.5">
+                  <label htmlFor="guest-phone" className="block text-[12px] font-semibold text-neutral-700 mb-1 ml-0.5">
                     Phone Number
                   </label>
                   <div className="flex rounded-xl bg-neutral-50 border border-neutral-200 overflow-hidden focus-within:ring-2 focus-within:ring-[#ff5b16] focus-within:bg-white transition-all">
@@ -178,12 +172,15 @@ export default function ClaimForm({
                       US +1
                     </span>
                     <input
+                      id="guest-phone"
                       type="tel"
+                      inputMode="tel"
+                      autoComplete="tel-national"
                       required
                       placeholder="(555) 123-4567"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      className="flex-1 h-12 px-3.5 bg-transparent text-neutral-900 text-[15px] focus:outline-none placeholder:text-neutral-400"
+                      className="min-w-0 flex-1 h-12 px-3.5 bg-transparent text-neutral-900 text-base focus:outline-none placeholder:text-neutral-400"
                     />
                   </div>
                 </div>

@@ -22,7 +22,7 @@ export default function WalletView({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="reward-overlay fixed inset-0 z-50 flex items-center justify-center p-4">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -36,7 +36,7 @@ export default function WalletView({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.94, y: 20 }}
             transition={{ type: 'spring', damping: 26, stiffness: 320 }}
-            className="relative w-full max-w-sm rounded-[36px] bg-white p-7 text-center shadow-2xl z-10 border border-black/5"
+            className="reward-dialog relative w-full max-w-sm rounded-[36px] bg-white p-7 text-center shadow-2xl z-10 border border-black/5"
           >
             {/* Success Check Badge */}
             <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-4 border border-emerald-100 shadow-sm">
@@ -46,7 +46,7 @@ export default function WalletView({
             </div>
 
             <h2 className="font-display text-3xl font-black text-neutral-900 tracking-tight leading-tight">
-              IT'S YOURS{guestName ? `, ${guestName.toUpperCase()}` : ''}!
+              IT&apos;S YOURS{guestName ? `, ${guestName.toUpperCase()}` : ''}!
             </h2>
             <p className="text-neutral-500 text-xs mt-1.5 mb-7 leading-relaxed">
               Add your <span className="font-bold text-neutral-800">{prize}% OFF</span> pass to Apple Wallet to redeem at your table.
