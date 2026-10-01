@@ -115,7 +115,11 @@ export default function ArcadeExperience({onPrizeStart,onPrizeComplete,textureUr
       {screen==='home'&&<section className="arc-home arc-enter">
         <h1>Good Food<br/><em>Great Luck</em></h1>
         <div className="arc-home-scene"><Scene mode="home" textureUrl={textureUrl} controller={controller} onPick={pick} onTick={tick} onReady={ready}/></div>
-        <button className="arc-main-button arc-play" aria-label="Play" onClick={()=>{setScreen('lobby');setStatus('ready');tick()}}><span aria-hidden="true">▶</span></button>
+        <button className="arc-main-button arc-play" aria-label="Play" onClick={()=>{setScreen('lobby');setStatus('ready');tick()}}>
+          <svg className="arc-play-symbol" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M8 5.14v13.72a1 1 0 001.5.86l11-6.86a1 1 0 000-1.72l-11-6.86a1 1 0 00-1.5.86z" />
+          </svg>
+        </button>
       </section>}
       {screen==='lobby'&&<section className="arc-lobby arc-enter">
         <h1>Choose your game</h1>

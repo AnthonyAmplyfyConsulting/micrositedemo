@@ -10,12 +10,14 @@
     --display: 'Barlow Condensed', -apple-system, BlinkMacSystemFont, sans-serif;
   }
 
+  html,
   body {
     font-family: var(--sans);
-    color: var(--dark);
-    background-color: #faf9f6;
+    color: #fff0d6;
+    background-color: #21120e;
     -webkit-font-smoothing: antialiased;
     margin: 0;
+    padding: 0;
   }
 }
 

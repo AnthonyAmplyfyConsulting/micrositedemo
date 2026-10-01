@@ -77,7 +77,7 @@ export default function ClaimForm({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="reward-overlay fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="reward-overlay fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto overscroll-contain">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -91,13 +91,13 @@ export default function ClaimForm({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.94, y: 20 }}
             transition={{ type: 'spring', damping: 26, stiffness: 320 }}
-            className="reward-dialog relative w-full max-w-sm rounded-[36px] bg-white shadow-2xl overflow-hidden z-10 border border-black/5"
+            className="reward-dialog relative my-auto w-full max-w-sm rounded-[32px] bg-white shadow-2xl overflow-hidden z-10 border border-black/5 flex-shrink-0"
           >
             {/* Close Button */}
             {!isSubmitting && (
               <button
                 onClick={onClose}
-                className="absolute top-4 right-4 z-20 w-11 h-11 rounded-full bg-black/10 hover:bg-black/20 text-white flex items-center justify-center transition-all active:scale-95"
+                className="absolute top-3.5 right-3.5 z-20 w-9 h-9 rounded-full bg-black/15 hover:bg-black/25 text-white flex items-center justify-center transition-all active:scale-95"
                 aria-label="Close"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
@@ -108,7 +108,7 @@ export default function ClaimForm({
 
             {/* Apple Card Header - High Polish Vibrant Orange */}
             <div 
-              className="px-6 pt-9 pb-7 text-center text-white relative overflow-hidden"
+              className="px-6 py-6 sm:pt-8 sm:pb-7 text-center text-white relative overflow-hidden flex-shrink-0"
               style={{
                 background: 'linear-gradient(135deg, #ff7a29 0%, #ff5b16 60%, #e24502 100%)',
               }}
@@ -120,19 +120,19 @@ export default function ClaimForm({
                 THAT&apos;S A TASTY WIN!
               </span>
 
-              <div className="flex items-center justify-center font-display text-[76px] font-black leading-none my-1 tracking-tight">
-                {prize}<span className="text-3xl ml-1 tracking-normal font-bold opacity-90">% OFF</span>
+              <div className="flex items-center justify-center font-display text-[58px] sm:text-[72px] font-black leading-none my-0.5 tracking-tight">
+                {prize}<span className="text-2xl sm:text-3xl ml-1 tracking-normal font-bold opacity-90">% OFF</span>
               </div>
 
-              <span className="text-[12px] font-bold tracking-[0.16em] text-white/90 uppercase">
+              <span className="text-[11px] sm:text-[12px] font-bold tracking-[0.16em] text-white/90 uppercase">
                 YOUR NEXT ORDER
               </span>
             </div>
 
             {/* Form Section - Clean Apple Minimalist */}
-            <form onSubmit={handleSubmit} className="p-6 pt-5">
-              <div className="text-center mb-5">
-                <h3 className="font-display text-2xl font-black text-neutral-900 tracking-tight">
+            <form onSubmit={handleSubmit} className="p-5 sm:p-6 pt-4">
+              <div className="text-center mb-4 sm:mb-5">
+                <h3 className="font-display text-xl sm:text-2xl font-black text-neutral-900 tracking-tight">
                   CLAIM YOUR PRIZE
                 </h3>
                 <p className="text-neutral-500 text-xs mt-0.5 font-medium">

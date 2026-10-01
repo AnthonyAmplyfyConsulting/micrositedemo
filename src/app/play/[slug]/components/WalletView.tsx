@@ -22,7 +22,7 @@ export default function WalletView({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="reward-overlay fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="reward-overlay fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto overscroll-contain">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -36,7 +36,7 @@ export default function WalletView({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.94, y: 20 }}
             transition={{ type: 'spring', damping: 26, stiffness: 320 }}
-            className="reward-dialog relative w-full max-w-sm rounded-[36px] bg-white p-7 text-center shadow-2xl z-10 border border-black/5"
+            className="reward-dialog relative my-auto w-full max-w-sm rounded-[32px] bg-white p-7 text-center shadow-2xl z-10 border border-black/5 flex-shrink-0"
           >
             {/* Success Check Badge */}
             <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-4 border border-emerald-100 shadow-sm">
