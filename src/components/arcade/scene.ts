@@ -195,7 +195,7 @@ export function createScene(host: HTMLElement, mode: SceneMode, textureUrl: stri
   if(mode==='dice') {camera.position.set(3.2,6.8,7.1);camera.lookAt(0,.15,0)}
   else if(mode==='cards'){camera.position.set(.8,5.1,7.1);camera.lookAt(0,.25,0)}
   else if(mode==='wheel'){camera.position.set(2.6,1.9,8.6);camera.lookAt(0,-.05,0)}
-  else {camera.position.set(1.6,2.8,8.2);camera.lookAt(0,0,0)}
+  else {camera.position.set(1.4,2.4,7.1);camera.lookAt(0,-.1,0)}
   const pmrem=new THREE.PMREMGenerator(renderer), room=new RoomEnvironment()
   const env=pmrem.fromScene(room,.035);scene.environment=env.texture;scene.environmentIntensity=.6;room.dispose();pmrem.dispose()
   scene.add(new THREE.HemisphereLight(0xfff1dc,0x3a1d15,.9))
@@ -224,6 +224,7 @@ export function createScene(host: HTMLElement, mode: SceneMode, textureUrl: stri
     objects.add(w.group);w.group.scale.setScalar(.86);w.group.position.set(-.34,.21,-.48);w.group.rotation.y=-.25
     cardSet.slice(0,2).forEach((c,i)=>{objects.add(c.group);c.group.position.set(1.02+i*.38,-.1,.66+i*.1);c.group.rotation.set(.05,-.26,-.23+i*.3);c.group.scale.setScalar(.82)})
     dice.forEach((d,i)=>{objects.add(d);d.position.set(-1.45+i*.83,-1.34,1.0+i*.18);d.rotation.set(.35+i*.4,.3+i*.5,.2);d.scale.setScalar(.75)})
+    objects.scale.setScalar(1.16)
   }
   const sparkleMap=canvasTexture(ctx=>{const g=ctx.createRadialGradient(32,32,0,32,32,30);g.addColorStop(0,'#fff9db');g.addColorStop(.3,'#ffcd7b');g.addColorStop(1,'rgba(255,180,90,0)');ctx.fillStyle=g;ctx.fillRect(0,0,64,64)},64,64)
   const sparkleGeo=new THREE.BufferGeometry(),sparklePositions=new Float32Array(36*3),sparkleVelocity=Array.from({length:36},()=>new THREE.Vector3((Math.random()-.5)*3,1+Math.random()*2,(Math.random()-.5)*2))
