@@ -54,3 +54,13 @@ Three.js renders the wheel, cards, and dice. Cannon records physically simulated
 - Original winning spin/coupon consistency, duplicate-claim rejection, pass manifest hashes, and CMS signatures using temporary test certificates.
 
 Local fixture checks do not establish trust in a live Apple signing certificate. Installing a pass on an iPhone must be checked against the deployed site's existing credentials.
+
+## Guided demonstration
+
+Open `/demo` for the playable nine-stage guest journey: QR landing, game selection, gameplay, reward, guest details, optional SMS consent, a simulated Wallet confirmation, an illustrative nearby reminder, and staff redemption. Highlights follow the actual controls, with animated tap cues and a separate explanation panel. Guests can choose any of the four games, go back, hide guidance, or replay.
+
+This route uses a fixed example 10% reward. It does not call spin, claim, pass, contact, or redemption APIs. Example contact details stay in component memory and reset on replay. The demonstration's optional SMS checkbox starts unchecked. The QR encodes a non-redeemable demo message. Existing `/play`, `/preview`, Supabase schema, and signing endpoints are unchanged.
+
+The illustrated Wallet sheet does not install a pass. Nearby relevance requires locations in the signed pass; push updates require an Apple Wallet update web service and registration/push infrastructure. Neither capability is configured by this demonstration. Device settings also determine whether a nearby pass appears.
+
+Tutorial verification includes the production build, TypeScript, lint, all four game paths, the complete nine-stage journey, replay and back navigation, optional consent, mobile and desktop highlight positioning, and checking that the demo makes no live API calls. A self-contained conversation preview is also checked through its embedded frame.

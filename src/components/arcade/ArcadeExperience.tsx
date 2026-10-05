@@ -15,6 +15,12 @@ const games: {id:Game; name:string; verb:string}[] = [
   {id:'scratch',name:'Scratch & Reveal',verb:'Get card'},
 ]
 
+export type ArcadeView = {
+  screen: 'home' | 'lobby' | 'game'
+  game: Game
+  status: 'loading' | 'ready' | 'requesting' | 'playing' | 'won'
+}
+
 function Scene({ mode, textureUrl, controller, onPick, onTick, onReady }: {
   mode:SceneMode; textureUrl:string;controller:React.RefObject<SceneController|null>
   onPick:(index:number)=>void;onTick:()=>void;onReady:()=>void
@@ -74,11 +80,12 @@ function Scratch({prize,onComplete,onStart,onTick}: {prize:number|null;onComplet
   </div>
 }
 
-export default function ArcadeExperience({onPrizeStart,onPrizeComplete,textureUrl='/card-back.webp',assetBase='',art}: {
+export default function ArcadeExperience({onPrizeStart,onPrizeComplete,textureUrl='/card-back.webp',assetBase='',art,initialScreen='home',initialGame='wheel',onViewChange}: {
   onPrizeStart:()=>Promise<number>;onPrizeComplete:(prize:number)=>void;textureUrl?:string;assetBase?:string;art?:Record<string,string>
+  initialScreen?: ArcadeView['screen']; initialGame?: Game; onViewChange?: (view: ArcadeView)=>void
 }) {
-  const [screen,setScreen]=useState<'home'|'lobby'|'game'>('home'),[game,setGame]=useState<Game>('wheel')
-  const [status,setStatus]=useState<'loading'|'ready'|'requesting'|'playing'|'won'>('loading'),[error,setError]=useState(''),[reward,setReward]=useState<number|null>(null)
+  const [screen,setScreen]=useState<ArcadeView['screen']>(initialScreen),[game,setGame]=useState<Game>(initialGame)
+  const [status,setStatus]=useState<ArcadeView['status']>(initialScreen==='lobby'||initialGame==='scratch'&&initialScreen==='game'?'ready':'loading'),[error,setError]=useState(''),[reward,setReward]=useState<number|null>(null)
   const [sound,setSound]=useState(false),[roll,setRoll]=useState('')
   const controller=useRef<SceneController|null>(null),lock=useRef(false),audio=useRef<AudioContext|null>(null),soundRef=useRef(false),timer=useRef<ReturnType<typeof setTimeout>|null>(null),dragStart=useRef<number|null>(null)
   const tick=useCallback(()=>{
@@ -86,6 +93,7 @@ export default function ArcadeExperience({onPrizeStart,onPrizeComplete,textureUr
     const ctx=audio.current,osc=ctx.createOscillator(),gain=ctx.createGain();osc.type='triangle';osc.frequency.setValueAtTime(650,ctx.currentTime);osc.frequency.exponentialRampToValueAtTime(180,ctx.currentTime+.035);gain.gain.setValueAtTime(.085,ctx.currentTime);gain.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.045);osc.connect(gain);gain.connect(ctx.destination);osc.start();osc.stop(ctx.currentTime+.05)
   },[])
   useEffect(()=>()=>{if(timer.current)clearTimeout(timer.current);void audio.current?.close()},[])
+  useEffect(()=>{onViewChange?.({screen,game,status})},[screen,game,status,onViewChange])
   const toggleSound=()=>{const next=!sound;soundRef.current=next;setSound(next);if(next){audio.current??=new AudioContext();void audio.current.resume();tick()}}
   const choose=(id:Game)=>{if(lock.current)return;setGame(id);setScreen('game');setStatus(id==='scratch'?'ready':'loading');setError('');setReward(null);setRoll('')}
   const ready=useCallback(()=>setStatus('ready'),[])
@@ -115,7 +123,7 @@ export default function ArcadeExperience({onPrizeStart,onPrizeComplete,textureUr
       {screen==='home'&&<section className="arc-home arc-enter">
         <h1>Good Food<br/><em>Great Luck</em></h1>
         <div className="arc-home-scene"><Scene mode="home" textureUrl={textureUrl} controller={controller} onPick={pick} onTick={tick} onReady={ready}/></div>
-        <button className="arc-main-button arc-play" aria-label="Play" onClick={()=>{setScreen('lobby');setStatus('ready');tick()}}>
+        <button className="arc-main-button arc-play" data-guide="home-play" aria-label="Play" onClick={()=>{setScreen('lobby');setStatus('ready');tick()}}>
           <svg className="arc-play-symbol" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <path d="M8 5.14v13.72a1 1 0 001.5.86l11-6.86a1 1 0 000-1.72l-11-6.86a1 1 0 00-1.5.86z" />
           </svg>
@@ -123,18 +131,18 @@ export default function ArcadeExperience({onPrizeStart,onPrizeComplete,textureUr
       </section>}
       {screen==='lobby'&&<section className="arc-lobby arc-enter">
         <h1>Choose your game</h1>
-        <div className="arc-game-grid">{games.map(g=><button key={g.id} className={`arc-game-tile arc-tile-${g.id}`} onClick={()=>choose(g.id)}>
+        <div className="arc-game-grid">{games.map(g=><button key={g.id} data-guide={`game-${g.id}`} className={`arc-game-tile arc-tile-${g.id}`} onClick={()=>choose(g.id)}>
           <div className="arc-game-art"><img src={art?.[g.id]??`${assetBase}/game-${g.id}.webp`} alt="" width={320} height={180}/></div>
           <h2>{g.name}</h2>
         </button>)}</div>
       </section>}
       {screen==='game'&&<section className="arc-game arc-enter">
         <h1>{selected.name}</h1>
-        <div className={`arc-stage arc-stage-${game}`} onPointerDown={e=>{if(game==='dice'&&status==='ready'){dragStart.current=e.clientY;e.currentTarget.setPointerCapture(e.pointerId)}}} onPointerUp={e=>{if(game==='dice'&&dragStart.current!==null){const distance=Math.abs(e.clientY-dragStart.current);dragStart.current=null;void start(1,distance>15?Math.min(distance/90,2):1)}}} onPointerCancel={()=>{dragStart.current=null}}>
+        <div data-guide="game-surface" className={`arc-stage arc-stage-${game}`} onPointerDown={e=>{if(game==='dice'&&status==='ready'){dragStart.current=e.clientY;e.currentTarget.setPointerCapture(e.pointerId)}}} onPointerUp={e=>{if(game==='dice'&&dragStart.current!==null){const distance=Math.abs(e.clientY-dragStart.current);dragStart.current=null;void start(1,distance>15?Math.min(distance/90,2):1)}}} onPointerCancel={()=>{dragStart.current=null}}>
           {game==='scratch'?<Scratch prize={reward} onStart={()=>{}} onTick={tick} onComplete={()=>{if(reward!==null)finish(reward)}}/>:<Scene key={game} mode={game} textureUrl={textureUrl} controller={controller} onPick={pick} onTick={tick} onReady={ready}/>}
           {status==='loading'&&<div className="arc-stage-status" aria-live="polite">{game==='cards'?'Shuffling…':'Loading…'}</div>}
         </div>
-        <div className="arc-action-area">
+        <div className="arc-action-area" data-guide="game-action">
           {error&&<p className="arc-error" role="alert">{error}</p>}
           <div className="arc-result" aria-live="polite">{status==='won'?<><strong>{reward}% OFF</strong>{roll&&<span>{roll}</span>}</>:<span>{status==='requesting'?'Getting your reward…':status==='playing'?(game==='scratch'?'Scratch the foil':'Good luck…'):game==='cards'?'Pick a card':game==='dice'?'Tap or swipe to toss':game==='scratch'?'Reveal your reward':'Give it a spin'}</span>}</div>
           {game==='cards'?<div className="arc-card-choices" aria-label="Choose your card">{[0,1,2].map(i=><button key={i} disabled={status!=='ready'} onClick={()=>void start(i)} aria-label={`Pick card ${i+1}`}>{i+1}</button>)}</div>:

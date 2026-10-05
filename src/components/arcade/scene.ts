@@ -187,7 +187,8 @@ function tabletop(){
 
 export function createScene(host: HTMLElement, mode: SceneMode, textureUrl: string, onTap: (index: number) => void, onTick: () => void, reducedMotion=false): SceneController {
   const scene=new THREE.Scene()
-  const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:'high-performance'})
+  // Reduced-motion scenes render on demand; retain their static frame across compositing.
+  const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:'high-performance',preserveDrawingBuffer:reducedMotion})
   renderer.setPixelRatio(Math.min(window.devicePixelRatio,1.75)); renderer.shadowMap.enabled=true
   renderer.shadowMap.type=THREE.PCFShadowMap;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.9
   renderer.domElement.setAttribute('aria-hidden','true');host.appendChild(renderer.domElement)
