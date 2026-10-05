@@ -79,14 +79,14 @@ function RewardPass({ prize, name, qrUrl, showCode = false }: { prize: number; n
   </div>
 }
 
-export default function GuidedDemo({ textureUrl, assetBase, art, badgeUrl = '/add-to-apple-wallet.svg', qrUrl = '/demo-redemption.svg' }: {
-  textureUrl?: string; assetBase?: string; art?: Record<string, string>; badgeUrl?: string; qrUrl?: string
+export default function GuidedDemo({ textureUrl, assetBase, art, badgeUrl = '/add-to-apple-wallet.svg', qrUrl = '/demo-redemption.svg', passEndpoint = '/api/demo-pass' }: {
+  textureUrl?: string; assetBase?: string; art?: Record<string, string>; badgeUrl?: string; qrUrl?: string; passEndpoint?: string
 }) {
   const [phase, setPhase] = useState<Phase>('arcade')
   const [view, setView] = useState<ArcadeView>({ screen: 'home', game: 'dice', status: 'loading' })
   const [startScreen, setStartScreen] = useState<ArcadeView['screen']>('home')
   const [run, setRun] = useState(0), [prize, setPrize] = useState(10)
-  const [guided, setGuided] = useState(true), [walletSheet, setWalletSheet] = useState(false), [reminder, setReminder] = useState(false)
+  const [guided, setGuided] = useState(true), [reminder, setReminder] = useState(false)
   const [name, setName] = useState('Alex'), [phone, setPhone] = useState('(203) 555-0142'), [consent, setConsent] = useState(false)
   const stage = useRef<HTMLDivElement>(null), form = useRef<HTMLFormElement>(null)
   const updateView = useCallback((next: ArcadeView) => setView(next), [])
@@ -100,14 +100,14 @@ export default function GuidedDemo({ textureUrl, assetBase, art, badgeUrl = '/ad
     { title: 'The reward is already theirs.', body: 'The reveal flows straight into the reward screen. Every game leads to this same simple next step.', prompt: 'A real reason to come back', target: 'reward-value' },
     { title: 'Turn a visit into a connection.', body: 'Guests enter their name and phone number to receive their pass. These are fictional details for the demo; nothing is submitted.', prompt: 'Try editing the example details', target: 'guest-details' },
     { title: 'Follow up with permission.', body: 'The optional checkbox records whether the guest wants promotional texts. They can leave it off and still keep their reward.', prompt: 'Choose consent, then continue to Wallet', target: 'consent-action' },
-    { title: walletSheet ? 'Confirm the pass.' : 'Put the reward in their pocket.', body: walletSheet ? 'On iPhone, the guest confirms Add in the Wallet sheet. This is an interactive preview, so no real pass is installed.' : 'The guest saves their offer to Apple Wallet. No extra app, and their reward stays easy to find when they return.', prompt: walletSheet ? 'Tap Add to preview the saved pass' : 'Tap Add to Apple Wallet', target: walletSheet ? 'wallet-confirm' : 'wallet-add', tap: true },
+    { title: 'Put the reward in their pocket.', body: 'Tap Add to Apple Wallet to save a real, signed pass to this device, exactly as a guest would. It is a demo pass, so its QR code can’t be redeemed.', prompt: 'Tap Add to Apple Wallet', target: 'wallet-add', tap: true },
     { title: 'A timely reason to return.', body: reminder ? 'With location relevance configured, Wallet can surface a nearby pass on the lock screen. Availability depends on the guest’s device settings.' : 'The offer now travels with the guest. Here is how a location-enabled pass could remind them near the restaurant.', prompt: 'Illustrative location reminder', target: reminder ? 'nearby-reminder' : 'saved-pass' },
     { title: 'A return visit closes the loop.', body: 'Back at the restaurant, staff scan the pass’s unique QR code and validate it with their staff PIN. The offer can only be redeemed once.', prompt: 'From first scan to the next visit', target: 'redemption-code' },
   ]
   const guide = guides[step]
 
   const resetArcade = (screen: ArcadeView['screen'] = 'home') => {
-    setPhase('arcade'); setStartScreen(screen); setView({ screen, game: view.game, status: 'loading' }); setRun(value => value + 1); setWalletSheet(false); setReminder(false)
+    setPhase('arcade'); setStartScreen(screen); setView({ screen, game: view.game, status: 'loading' }); setRun(value => value + 1); setReminder(false)
   }
   const restart = () => { setGuided(true); setName('Alex'); setPhone('(203) 555-0142'); setConsent(false); resetArcade() }
   const previous = () => {
@@ -115,8 +115,8 @@ export default function GuidedDemo({ textureUrl, assetBase, art, badgeUrl = '/ad
     else if (phase === 'reward') resetArcade('game')
     else if (phase === 'details') setPhase('reward')
     else if (phase === 'consent') setPhase('details')
-    else if (phase === 'wallet') { setWalletSheet(false); setPhase('consent') }
-    else if (phase === 'saved') { setReminder(false); setWalletSheet(false); setPhase('wallet') }
+    else if (phase === 'wallet') setPhase('consent')
+    else if (phase === 'saved') { setReminder(false); setPhase('wallet') }
     else setPhase('saved')
   }
   const continueDetails = () => { if (form.current?.reportValidity()) setPhase('wallet') }
@@ -152,15 +152,14 @@ export default function GuidedDemo({ textureUrl, assetBase, art, badgeUrl = '/ad
           {phase === 'wallet' && <section className="tour-wallet tour-screen">
             <div className="tour-small-kicker">YOUR REWARD IS READY</div><h2>Take it with you.</h2><p>Save it now. Enjoy it on your next visit.</p>
             <RewardPass prize={prize} name={name} qrUrl={qrUrl} />
-            <button className="tour-wallet-badge" data-guide="wallet-add" aria-label="Add to Apple Wallet" onClick={() => setWalletSheet(true)}><img src={badgeUrl} alt="Add to Apple Wallet" width="210" height="68" /></button>
-            <p className="tour-example-note">Demo only. No real pass is installed.</p>
-            {walletSheet && <div className="tour-wallet-sheet" role="dialog" aria-label="Apple Wallet preview"><div className="tour-wallet-sheet-bar"><button onClick={() => setWalletSheet(false)}>Cancel</button><strong>Wallet preview</strong><button data-guide="wallet-confirm" onClick={() => { setWalletSheet(false); setReminder(false); setPhase('saved') }}>Add</button></div><RewardPass prize={prize} name={name} qrUrl={qrUrl} showCode /><p>Interactive preview of adding a pass.</p></div>}
+            <a className="tour-wallet-badge" href={passEndpoint + '?prize=' + prize + '&name=' + encodeURIComponent(name.trim() || 'Alex')} data-guide="wallet-add" aria-label="Add to Apple Wallet" onClick={() => { setReminder(false); setTimeout(() => setPhase('saved'), 800) }}><img src={badgeUrl} alt="Add to Apple Wallet" width="210" height="68" /></a>
+            <p className="tour-example-note">Adds a real demo pass on iPhone or Mac Safari. Not redeemable.</p>
           </section>}
           {(phase === 'saved' || phase === 'redeem' || phase === 'complete') && <section className={'tour-saved tour-screen' + (reminder && phase === 'saved' ? ' tour-lock-screen' : '')}>
-            {reminder && phase === 'saved' ? <><div className="tour-lock-time" aria-hidden="true">12:30<span>YOUR NEXT VISIT</span></div><div className="tour-notification" data-guide="nearby-reminder"><div className="tour-notification-head"><span className="tour-wallet-icon" aria-hidden="true"><i /><i /><i /></span><strong>WALLET</strong><span>Nearby</span></div><h3>A little luck for your next bite.</h3><p>You’re near Amplyfy. Your {prize}% off reward is ready when you are.</p></div><p className="tour-reminder-note">Illustrative reminder. Location-enabled passes and device settings are required.</p><div className="tour-lock-pass"><RewardPass prize={prize} name={name} qrUrl={qrUrl} /></div></> : <><div className="tour-saved-check" aria-hidden="true">✓</div><div className="tour-small-kicker">{phase === 'saved' ? 'SAVED IN THIS DEMO' : phase === 'complete' ? 'FROM SCAN TO RETURN VISIT' : 'READY FOR THE NEXT VISIT'}</div><h2>{phase === 'saved' ? 'A reward worth keeping.' : 'Good food. Again.'}</h2><RewardPass prize={prize} name={name} qrUrl={qrUrl} showCode={phase !== 'saved'} /><p className="tour-example-note">{phase === 'saved' ? 'The guest’s reward stays easy to find.' : 'Example QR only. No live redemption is possible.'}</p></>}
+            {reminder && phase === 'saved' ? <><div className="tour-lock-time" aria-hidden="true">12:30<span>YOUR NEXT VISIT</span></div><div className="tour-notification" data-guide="nearby-reminder"><div className="tour-notification-head"><span className="tour-wallet-icon" aria-hidden="true"><i /><i /><i /></span><strong>WALLET</strong><span>Nearby</span></div><h3>A little luck for your next bite.</h3><p>You’re near Amplyfy. Your {prize}% off reward is ready when you are.</p></div><p className="tour-reminder-note">Illustrative reminder. Location-enabled passes and device settings are required.</p><div className="tour-lock-pass"><RewardPass prize={prize} name={name} qrUrl={qrUrl} /></div></> : <><div className="tour-saved-check" aria-hidden="true">✓</div><div className="tour-small-kicker">{phase === 'saved' ? 'SAVED TO APPLE WALLET' : phase === 'complete' ? 'FROM SCAN TO RETURN VISIT' : 'READY FOR THE NEXT VISIT'}</div><h2>{phase === 'saved' ? 'A reward worth keeping.' : 'Good food. Again.'}</h2><RewardPass prize={prize} name={name} qrUrl={qrUrl} showCode={phase !== 'saved'} /><p className="tour-example-note">{phase === 'saved' ? 'The guest’s reward stays easy to find.' : 'Example QR only. No live redemption is possible.'}</p></>}
           </section>}
         </div>
-        {guided && !playing && phase !== 'complete' && <Spotlight key={guide.target + String(walletSheet) + String(reminder)} stage={stage} target={guide.target} tap={guide.tap} />}
+        {guided && !playing && phase !== 'complete' && <Spotlight key={guide.target + String(reminder)} stage={stage} target={guide.target} tap={guide.tap} />}
       </div>
       <aside className="tour-coach" aria-label="Guided demo explanation">
         {phase === 'complete' ? <><div className="tour-kicker">THE FULL GUEST JOURNEY</div><h2>A first visit becomes<br />a reason to return.</h2><p>QR scan. A game. A reward. Optional SMS consent. A pass in their pocket.</p><button className="tour-next" onClick={restart}>Replay the walkthrough</button><button className="tour-secondary" onClick={() => { setGuided(false); resetArcade('lobby') }}>Explore all four games</button></> : guided ? <>
@@ -170,8 +169,8 @@ export default function GuidedDemo({ textureUrl, assetBase, art, badgeUrl = '/ad
           <div className="tour-prompt"><span className={playing ? 'tour-wait-dot' : 'tour-prompt-dot'} />{playing ? 'Revealing the reward…' : guide.prompt}</div>
           {canNext && <button className="tour-next" onClick={next}>{nextLabel}<span aria-hidden="true">→</span></button>}
           <div className="tour-coach-bottom"><button disabled={step === 0 || playing} onClick={previous}>← Previous</button><span>PLAYABLE WALKTHROUGH</span></div>
-        </> : <><div className="tour-kicker">EXPLORE THE DEMO</div><h2>Your turn to play.</h2><p>Try any game and follow the reward through to Wallet. All contact details, passes and reminders here are simulated.</p><button className="tour-next" onClick={() => setGuided(true)}>Bring back the guide</button><button className="tour-secondary" onClick={() => resetArcade('lobby')}>Choose another game</button>{phase === 'saved' && <button className="tour-secondary" onClick={() => setPhase('redeem')}>Preview redemption</button>}</>}
-        <p className="tour-demo-footer">Demo only · No contacts saved · No texts sent</p>
+        </> : <><div className="tour-kicker">EXPLORE THE DEMO</div><h2>Your turn to play.</h2><p>Try any game and follow the reward through to Wallet. Contact details and reminders here are simulated. The Wallet pass is real but not redeemable.</p><button className="tour-next" onClick={() => setGuided(true)}>Bring back the guide</button><button className="tour-secondary" onClick={() => resetArcade('lobby')}>Choose another game</button>{phase === 'saved' && <button className="tour-secondary" onClick={() => setPhase('redeem')}>Preview redemption</button>}</>}
+        <p className="tour-demo-footer">Demo only · No contacts saved · No texts sent · Wallet pass is not redeemable</p>
       </aside>
     </div>
   </div>

@@ -87,10 +87,16 @@ function extractCerts() {
   throw new Error('No valid Apple certificates found in environment variables or certs/ folder.');
 }
 
+export type PassOptions = {
+  /** Demo passes are real, signed Wallet passes, but their QR code cannot be redeemed. */
+  demo?: boolean;
+};
+
 export async function generatePass(
   coupon: any,
   restaurant: any,
-  explicitBaseUrl?: string
+  explicitBaseUrl?: string,
+  options: PassOptions = {}
 ): Promise<Buffer> {
   const modelDir = path.join(process.cwd(), 'src/lib/pass/pass.model');
   const certificates = extractCerts();
@@ -108,25 +114,35 @@ export async function generatePass(
   );
 
   const baseUrl = explicitBaseUrl || process.env.NEXT_PUBLIC_BASE_URL || 'https://micrositedemo.vercel.app';
-  const redeemUrl = `${baseUrl}/redeem/${coupon.id}`;
+  const redeemUrl = options.demo ? `${baseUrl}/demo` : `${baseUrl}/redeem/${coupon.id}`;
+  const venue = restaurant?.name || 'Amplyfy';
 
+  // Layout mirrors the guided demo pass: wordmark + "GUEST REWARD", big offer, guest / use.
   pass.headerFields.push({
     key: 'brand',
-    label: 'REWARD',
-    value: restaurant?.name || 'Amplyfy',
+    label: options.demo ? 'DEMO PASS' : 'GUEST REWARD',
+    value: venue,
   });
 
   pass.primaryFields.push({
     key: 'discount',
-    label: 'OFFER',
+    label: 'GOOD FOOD. GREAT LUCK.',
     value: `${coupon.prize_percent}% OFF`,
   });
 
-  pass.secondaryFields.push({
-    key: 'guest',
-    label: 'GUEST',
-    value: coupon.guest_name || 'Guest',
-  });
+  pass.secondaryFields.push(
+    {
+      key: 'guest',
+      label: 'GUEST',
+      value: coupon.guest_name || 'Guest',
+    },
+    {
+      key: 'use',
+      label: 'USE',
+      value: 'One visit',
+      textAlignment: 'PKTextAlignmentRight',
+    }
+  );
 
   const expiresDate = new Date(coupon.expires_at).toLocaleDateString('en-US', {
     month: 'short',
@@ -134,41 +150,68 @@ export async function generatePass(
     year: 'numeric',
   });
 
-  pass.auxiliaryFields.push({
-    key: 'expires',
-    label: 'EXPIRES',
-    value: expiresDate,
-  });
-
-  // Back Fields - Apple automatically converts raw URLs into tappable links on iOS
-  pass.backFields.push(
+  pass.auxiliaryFields.push(
     {
-      key: 'redeem_link',
-      label: 'STAFF REDEEM LINK',
-      value: `Tap here to redeem: ${redeemUrl}`,
+      key: 'offer',
+      label: 'VALID ON',
+      value: 'Your next order',
     },
     {
-      key: 'instructions',
-      label: 'HOW TO REDEEM',
-      value:
-        'Show this pass to your server or bartender. Staff can tap the Staff Redeem Link above or scan the QR code on the front to enter their staff PIN.',
-    },
-    {
-      key: 'terms',
-      label: 'TERMS & CONDITIONS',
-      value: `One-time use coupon. Valid for ${coupon.prize_percent}% off your bill at ${
-        restaurant?.name || 'participating location'
-      }. Cannot be combined with other offers or discounts.`,
+      key: 'expires',
+      label: 'EXPIRES',
+      value: expiresDate,
+      textAlignment: 'PKTextAlignmentRight',
     }
   );
+
+  if (options.demo) {
+    pass.backFields.push(
+      {
+        key: 'demo_notice',
+        label: 'DEMO PASS',
+        value: 'This pass was created from the Amplyfy guided demo. It is not redeemable and has no cash value.',
+      },
+      {
+        key: 'demo_link',
+        label: 'TRY THE DEMO AGAIN',
+        value: redeemUrl,
+      }
+    );
+  } else {
+    // Back Fields - Apple automatically converts raw URLs into tappable links on iOS
+    pass.backFields.push(
+      {
+        key: 'redeem_link',
+        label: 'STAFF REDEEM LINK',
+        value: `Tap here to redeem: ${redeemUrl}`,
+      },
+      {
+        key: 'instructions',
+        label: 'HOW TO REDEEM',
+        value:
+          'Show this pass to your server or bartender. Staff can tap the Staff Redeem Link above or scan the QR code on the front to enter their staff PIN.',
+      },
+      {
+        key: 'terms',
+        label: 'TERMS & CONDITIONS',
+        value: `One-time use coupon. Valid for ${coupon.prize_percent}% off your bill at ${
+          restaurant?.name || 'participating location'
+        }. Cannot be combined with other offers or discounts.`,
+      }
+    );
+  }
 
   // Front QR Code - Barcode altText shows the tap instruction
   pass.setBarcodes({
     format: 'PKBarcodeFormatQR',
     message: redeemUrl,
     messageEncoding: 'iso-8859-1',
-    altText: `Tap (i) top right to redeem or scan QR`,
+    altText: options.demo ? 'Demo pass • Not redeemable' : `Tap (i) top right to redeem or scan QR`,
   });
+
+  if (coupon.expires_at) {
+    pass.setExpirationDate(new Date(coupon.expires_at));
+  }
 
   return pass.getAsBuffer();
 }
