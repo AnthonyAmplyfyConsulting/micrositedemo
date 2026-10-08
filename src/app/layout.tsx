@@ -15,8 +15,8 @@ const dmSans = DM_Sans({
 })
 
 export const metadata: Metadata = {
-  title: 'Amplyfy • Play for your next bite',
-  description: 'Choose a game and win an offer on your next order.',
+  title: 'Amplyfy • Restaurant Growth Demo',
+  description: 'Guests scan, play, and unlock an offer. Grow repeat visits with Amplyfy.',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
@@ -28,7 +28,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
-  themeColor: '#21120e',
+  themeColor: '#000000',
 }
 
 export default function RootLayout({
@@ -37,8 +37,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className="bg-[#21120e]">
-      <body className={`${barlowCondensed.variable} ${dmSans.variable} font-sans bg-[#21120e] text-[#fff0d6] antialiased`}>
+    <html lang="en" className="bg-[#080706]">
+      <body className={`${barlowCondensed.variable} ${dmSans.variable} font-sans bg-[#080706] text-[#fff0d6] antialiased`}>
         {children}
       </body>
     </html>

@@ -1,5 +1,2 @@
-import GuidedDemo from '@/components/arcade/GuidedDemo'
-
-export default function DemoPage() {
-  return <GuidedDemo />
-}
+import LuxuryExperience from '@/components/luxury/LuxuryExperience'
+export default function DemoPage() { return <LuxuryExperience /> }

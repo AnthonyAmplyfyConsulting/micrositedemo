@@ -1,5 +1,2 @@
-import GuidedDemo from '@/components/arcade/GuidedDemo'
-
-export default function Home() {
-  return <GuidedDemo />
-}
+import LuxuryExperience from '@/components/luxury/LuxuryExperience'
+export default function Home() { return <LuxuryExperience /> }

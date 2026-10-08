@@ -1,3 +1,2 @@
-import Preview from '@/components/arcade/Preview'
-
-export default function PreviewPage(){return <Preview/>}
+import LuxuryExperience from '@/components/luxury/LuxuryExperience'
+export default function PreviewPage() { return <LuxuryExperience /> }

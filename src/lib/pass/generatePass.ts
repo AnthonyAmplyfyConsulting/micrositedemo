@@ -126,7 +126,7 @@ export async function generatePass(
 
   pass.primaryFields.push({
     key: 'discount',
-    label: 'GOOD FOOD. GREAT LUCK.',
+    label: 'YOUR FIRST MONTH WITH US',
     value: `${coupon.prize_percent}% OFF`,
   });
 
@@ -138,8 +138,8 @@ export async function generatePass(
     },
     {
       key: 'use',
-      label: 'USE',
-      value: 'One visit',
+      label: 'OFFER',
+      value: 'First month',
       textAlignment: 'PKTextAlignmentRight',
     }
   );
@@ -153,8 +153,8 @@ export async function generatePass(
   pass.auxiliaryFields.push(
     {
       key: 'offer',
-      label: 'VALID ON',
-      value: 'Your next order',
+      label: 'REWARD',
+      value: `${coupon.prize_percent}% Off First Month`,
     },
     {
       key: 'expires',
@@ -168,13 +168,13 @@ export async function generatePass(
     pass.backFields.push(
       {
         key: 'demo_notice',
-        label: 'DEMO PASS',
-        value: 'This pass was created from the Amplyfy guided demo. It is not redeemable and has no cash value.',
+        label: 'EXCLUSIVE REWARD',
+        value: `Valid for ${coupon.prize_percent}% off your first month with us at Amplyfy.`,
       },
       {
-        key: 'demo_link',
-        label: 'TRY THE DEMO AGAIN',
-        value: redeemUrl,
+        key: 'terms',
+        label: 'TERMS & CONDITIONS',
+        value: `One-time use pass. Valid for ${coupon.prize_percent}% off your first month with us at Amplyfy. Cannot be combined with other offers or discounts.`,
       }
     );
   } else {
@@ -194,8 +194,8 @@ export async function generatePass(
       {
         key: 'terms',
         label: 'TERMS & CONDITIONS',
-        value: `One-time use coupon. Valid for ${coupon.prize_percent}% off your bill at ${
-          restaurant?.name || 'participating location'
+        value: `One-time use pass. Valid for ${coupon.prize_percent}% off your first month with us at ${
+          restaurant?.name || 'Amplyfy'
         }. Cannot be combined with other offers or discounts.`,
       }
     );

@@ -75,9 +75,9 @@ export async function createOrUpdateContact(
       body: JSON.stringify({
         locationId,
         firstName: params.firstName,
-        lastName: params.lastName || '',
+        ...(params.lastName ? { lastName: params.lastName } : {}),
         phone: params.phone,
-        email: params.email || '',
+        ...(params.email ? { email: params.email } : {}),
         tags: params.tags || [],
         source: 'Amplyfy Spin-to-Win',
         customFields: params.customFields ? 
