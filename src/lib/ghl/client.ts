@@ -1,7 +1,10 @@
+import 'server-only'
+
 // GoHighLevel API Client
 // Docs: https://highlevel.stoplight.io/docs/integrations
 
 const GHL_API_BASE = 'https://services.leadconnectorhq.com';
+const REQUEST_TIMEOUT_MS = 6000;
 
 export interface GHLContactParams {
   firstName: string;
@@ -22,128 +25,92 @@ interface GHLContactResponse {
   };
 }
 
-async function ghlFetch(
-  endpoint: string,
-  options: RequestInit = {}
-): Promise<Response> {
-  const apiKey = process.env.GHL_API_KEY;
-  const locationId = process.env.GHL_LOCATION_ID;
-
-  if (!apiKey) {
-    console.warn('GHL_API_KEY not configured, skipping GHL integration');
-    throw new Error('GHL_API_KEY not configured');
+export class GHLError extends Error {
+  constructor(message: string, readonly status?: number) {
+    super(message);
+    this.name = 'GHLError';
   }
+  /** Network failures, timeouts, rate limits and 5xx responses are worth retrying. */
+  get retryable() {
+    return this.status === undefined || this.status === 429 || this.status >= 500;
+  }
+}
 
-  const headers: Record<string, string> = {
-    'Authorization': `Bearer ${apiKey}`,
-    'Content-Type': 'application/json',
-    'Version': '2021-07-28',
-    ...(options.headers as Record<string, string> || {}),
-  };
+export const isGhlConfigured = () => Boolean(process.env.GHL_API_KEY && process.env.GHL_LOCATION_ID);
 
-  const res = await fetch(`${GHL_API_BASE}${endpoint}`, {
-    ...options,
-    headers,
-  });
+async function ghlFetch(endpoint: string, options: RequestInit = {}): Promise<Response> {
+  const apiKey = process.env.GHL_API_KEY;
+  if (!apiKey) throw new GHLError('GHL_API_KEY not configured', 0);
+
+  let res: Response;
+  try {
+    res = await fetch(`${GHL_API_BASE}${endpoint}`, {
+      ...options,
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+        Version: '2021-07-28',
+        ...((options.headers as Record<string, string>) || {}),
+      },
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      cache: 'no-store',
+    });
+  } catch (err) {
+    throw new GHLError(`GHL request failed: ${err instanceof Error ? err.name : 'unknown'}`);
+  }
 
   if (!res.ok) {
-    const body = await res.text();
-    console.error(`GHL API error ${res.status}: ${body}`);
-    throw new Error(`GHL API error: ${res.status}`);
+    // Log status only: GHL error bodies can echo back guest PII.
+    console.error(`GHL API error ${res.status} on ${endpoint}`);
+    throw new GHLError(`GHL API error: ${res.status}`, res.status);
   }
-
   return res;
 }
 
 /**
  * Create or update a contact in GoHighLevel.
  * Uses the upsert endpoint — if a contact with the same phone exists, it updates.
+ * Returns null when GHL isn't configured; throws GHLError on failure.
  */
-export async function createOrUpdateContact(
-  params: GHLContactParams
-): Promise<string | null> {
+export async function createOrUpdateContact(params: GHLContactParams): Promise<string | null> {
   const locationId = process.env.GHL_LOCATION_ID;
-
-  if (!locationId) {
-    console.warn('GHL_LOCATION_ID not set, skipping contact creation');
+  if (!isGhlConfigured() || !locationId) {
+    console.warn('GoHighLevel not configured, skipping contact sync');
     return null;
   }
 
-  try {
-    const res = await ghlFetch('/contacts/upsert', {
-      method: 'POST',
-      body: JSON.stringify({
-        locationId,
-        firstName: params.firstName,
-        ...(params.lastName ? { lastName: params.lastName } : {}),
-        phone: params.phone,
-        ...(params.email ? { email: params.email } : {}),
-        tags: params.tags || [],
-        source: 'Amplyfy Spin-to-Win',
-        customFields: params.customFields ? 
-          Object.entries(params.customFields).map(([key, value]) => ({
-            key,
-            field_value: value,
-          })) : [],
-      }),
-    });
+  const res = await ghlFetch('/contacts/upsert', {
+    method: 'POST',
+    body: JSON.stringify({
+      locationId,
+      firstName: params.firstName,
+      ...(params.lastName ? { lastName: params.lastName } : {}),
+      phone: params.phone,
+      ...(params.email ? { email: params.email } : {}),
+      tags: params.tags || [],
+      source: 'Amplyfy Spin-to-Win',
+      customFields: params.customFields
+        ? Object.entries(params.customFields).map(([key, value]) => ({ key, field_value: value }))
+        : [],
+    }),
+  });
 
-    const data = await res.json() as GHLContactResponse;
-    console.log(`GHL contact upserted: ${data.contact.id}`);
-    return data.contact.id;
-  } catch (error) {
-    console.error('Failed to create/update GHL contact:', error);
-    return null;
-  }
+  const data = (await res.json()) as GHLContactResponse;
+  return data?.contact?.id ?? null;
 }
 
 /**
- * Add a tag to an existing contact.
+ * Retry wrapper with exponential backoff. Only retries errors that can succeed
+ * on a second attempt (timeouts, 429, 5xx) — never bad requests or auth errors.
  */
-export async function addContactTag(
-  contactId: string,
-  tag: string
-): Promise<boolean> {
-  const locationId = process.env.GHL_LOCATION_ID;
-
-  if (!locationId || !contactId) {
-    console.warn('Missing locationId or contactId for tag addition');
-    return false;
-  }
-
-  try {
-    await ghlFetch(`/contacts/${contactId}/tags`, {
-      method: 'POST',
-      body: JSON.stringify({
-        tags: [tag],
-      }),
-    });
-
-    console.log(`GHL tag "${tag}" added to contact ${contactId}`);
-    return true;
-  } catch (error) {
-    console.error(`Failed to add tag "${tag}" to contact ${contactId}:`, error);
-    return false;
-  }
-}
-
-/**
- * Retry wrapper with exponential backoff.
- */
-export async function withRetry<T>(
-  fn: () => Promise<T>,
-  maxRetries = 3,
-  baseDelay = 1000
-): Promise<T> {
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+export async function withRetry<T>(fn: () => Promise<T>, maxRetries = 2, baseDelay = 500): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
     try {
       return await fn();
     } catch (error) {
-      if (attempt === maxRetries) throw error;
-      const delay = baseDelay * Math.pow(2, attempt);
-      console.log(`Retry ${attempt + 1}/${maxRetries} after ${delay}ms`);
-      await new Promise(resolve => setTimeout(resolve, delay));
+      const retryable = error instanceof GHLError ? error.retryable : true;
+      if (!retryable || attempt >= maxRetries) throw error;
+      await new Promise((resolve) => setTimeout(resolve, baseDelay * 2 ** attempt));
     }
   }
-  throw new Error('Unreachable');
 }

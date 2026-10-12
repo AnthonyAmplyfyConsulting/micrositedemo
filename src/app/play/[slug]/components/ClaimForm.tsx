@@ -194,7 +194,14 @@ export default function ClaimForm({
                     className="mt-0.5 w-4 h-4 rounded border-neutral-300 accent-[#ff5b16] text-[#ff5b16] focus:ring-0"
                   />
                   <span className="text-[11px] leading-relaxed text-neutral-500 font-normal">
-                    I agree to receive promotional text messages from {restaurantName}. Consent is optional. Msg & data rates may apply.
+                    I agree to receive promotional text messages from {restaurantName}. Consent is optional. Msg & data rates may apply. Reply STOP to cancel. View{' '}
+                    <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-[#ff5b16] underline">
+                      Terms
+                    </a>{' '}
+                    &{' '}
+                    <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-[#ff5b16] underline">
+                      Privacy
+                    </a>.
                   </span>
                 </label>
               </div>

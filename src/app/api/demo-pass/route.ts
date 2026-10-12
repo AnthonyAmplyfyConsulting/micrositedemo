@@ -1,29 +1,23 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { randomUUID } from 'crypto';
 import { generatePass } from '@/lib/pass/generatePass';
+import { cleanName, getBaseUrl, isPrize, jsonError, limitByIp } from '@/lib/security/request';
 
 export const runtime = 'nodejs';
-
-const PRIZES = new Set([5, 10, 15]);
 
 /**
  * Real, signed Apple Wallet pass for the guided /demo.
  * No database writes, no GHL contact, and the QR code is not redeemable.
  */
 export async function GET(req: NextRequest) {
+  // Pass signing is CPU-heavy; throttle to prevent resource exhaustion.
+  const limited = limitByIp(req, 'demo-pass', 20, 10 * 60 * 1000);
+  if (limited) return limited;
+
   const params = req.nextUrl.searchParams;
   const prize = Number(params.get('prize'));
-  const name = (params.get('name') || '').replace(/[^\p{L}\p{N} .'\-]/gu, '').trim().slice(0, 40) || 'Guest';
-
-  if (!PRIZES.has(prize)) {
-    return NextResponse.json({ error: 'Invalid prize' }, { status: 400 });
-  }
-
-  const host = req.headers.get('x-forwarded-host') || req.headers.get('host');
-  const proto = req.headers.get('x-forwarded-proto') || 'https';
-  const baseUrl = host && !host.includes('localhost')
-    ? `${proto}://${host}`
-    : (process.env.NEXT_PUBLIC_BASE_URL || 'https://micrositedemo.vercel.app');
+  if (!isPrize(prize)) return jsonError('Invalid prize', 400);
+  const name = cleanName(params.get('name') ?? '')?.slice(0, 40) || 'Guest';
 
   const coupon = {
     id: `demo-${randomUUID()}`,
@@ -33,17 +27,17 @@ export async function GET(req: NextRequest) {
   };
 
   try {
-    const passBuffer = await generatePass(coupon, { name: 'Amplyfy' }, baseUrl, { demo: true });
+    const passBuffer = await generatePass(coupon, { name: 'Amplyfy' }, getBaseUrl(req), { demo: true });
     return new Response(new Uint8Array(passBuffer), {
       status: 200,
       headers: {
         'Content-Type': 'application/vnd.apple.pkpass',
         'Content-Disposition': 'inline; filename="amplyfy-demo-reward.pkpass"',
-        'Cache-Control': 'no-store, no-cache, must-revalidate',
+        'Cache-Control': 'no-store',
       },
     });
-  } catch (err: unknown) {
-    console.error('Demo pass generation error:', err);
-    return NextResponse.json({ error: 'Failed to generate pass', details: err instanceof Error ? err.message : String(err) }, { status: 500 });
+  } catch (err) {
+    console.error('Demo pass generation error:', err instanceof Error ? err.message : err);
+    return jsonError('Failed to generate pass', 500);
   }
 }

@@ -1,29 +1,24 @@
-import bcrypt from 'bcryptjs';
+import 'server-only'
+import bcrypt from 'bcryptjs'
+import { randomBytes, randomInt } from 'crypto'
+import { ALLOWED_PRIZES, type Prize } from '@/lib/security/request'
 
+/** Hash a staff PIN for storage in restaurants.staff_pin_hash. */
 export async function hashPin(pin: string): Promise<string> {
-  const salt = await bcrypt.genSalt(10);
-  return bcrypt.hash(pin, salt);
+  return bcrypt.hash(pin, 12)
 }
 
 export async function verifyPin(pin: string, hash: string): Promise<boolean> {
-  return bcrypt.compare(pin, hash);
+  return bcrypt.compare(pin, hash)
 }
 
-export function generateSessionToken(): string {
-  return crypto.randomUUID();
-}
-
+/** Unique, unguessable Wallet pass serial, e.g. AMP-3F9A1C2B-7D41. */
 export function generatePassSerial(): string {
-  const uuid = crypto.randomUUID();
-  const first8 = uuid.substring(0, 8);
-  const random4 = Math.floor(1000 + Math.random() * 9000).toString();
-  return `AMP-${first8}-${random4}`;
+  const hex = randomBytes(6).toString('hex').toUpperCase()
+  return `AMP-${hex.slice(0, 8)}-${hex.slice(8)}${randomInt(10, 100)}`
 }
 
-export function pickPrize(): { index: number; prize: number } {
-  const prizes = [5, 10, 15, 5, 10, 15, 5, 10, 15, 5, 10, 15];
-  const array = new Uint32Array(1);
-  crypto.getRandomValues(array);
-  const index = array[0] % prizes.length;
-  return { index, prize: prizes[index] };
+/** Server-side prize draw using a cryptographically secure, unbiased RNG. */
+export function pickPrize(): Prize {
+  return ALLOWED_PRIZES[randomInt(ALLOWED_PRIZES.length)]
 }

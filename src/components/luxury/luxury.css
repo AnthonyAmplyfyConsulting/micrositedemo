@@ -48,5 +48,9 @@
 .amp-luxury-root .amp-golf-guide-text strong{color:#ffd88a!important;font-size:12px;letter-spacing:.8px;font-weight:700}
 .amp-golf-guide-text span{font-size:11px;line-height:1.4;color:#d8c7b0}
 @keyframes amp-bounce-pulse{0%,100%{transform:translateY(0);box-shadow:0 4px 20px #000c}50%{transform:translateY(-4px);box-shadow:0 8px 28px #ff701e40}}
-@keyframes amp-glow{0%,100%{opacity:.6;transform:scale(.92)}50%{opacity:1;transform:scale(1.15)}}
-
+.amp-legal-footer{display:flex;justify-content:center;align-items:center;gap:12px;margin-top:20px;font-size:11px;color:#a89680;border-top:1px solid #ffffff12;padding-top:14px}
+.amp-legal-footer a{color:#e6c898!important;text-decoration:none;transition:color .2s;letter-spacing:.3px}
+.amp-legal-footer a:hover{color:#fff!important;text-decoration:underline}
+.amp-consent a{color:#ff9e47!important;text-decoration:underline;text-underline-offset:3px}
+.amp-consent a:hover{color:#fff!important}
+.amp-honeypot{position:absolute;left:-9999px;top:-9999px;opacity:0;pointer-events:none;height:0;width:0;overflow:hidden}

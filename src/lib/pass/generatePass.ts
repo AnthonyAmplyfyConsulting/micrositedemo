@@ -1,9 +1,18 @@
+import 'server-only';
 import { PKPass } from 'passkit-generator';
 import path from 'path';
 import fs from 'fs';
 import forge from 'node-forge';
 
-function extractCerts() {
+type Certificates = { wwdr: Buffer; signerCert: Buffer; signerKey: Buffer };
+let cachedCerts: Certificates | null = null;
+
+function extractCerts(): Certificates {
+  cachedCerts ??= loadCerts();
+  return cachedCerts;
+}
+
+function loadCerts(): Certificates {
   // If base64-encoded PEM strings are provided in env:
   if (process.env.APPLE_WWDR_CERT_BASE64 && process.env.APPLE_SIGNER_CERT_BASE64 && process.env.APPLE_SIGNER_KEY_BASE64) {
     const parse = (val: string) => {
@@ -32,7 +41,6 @@ function extractCerts() {
   }
 
   // If running with .p12 and password (e.g. from Vercel env or local fallback):
-  const p12Password = process.env.APPLE_PASS_CERT_PASSWORD || 'Flyfit_97$';
   let p12Buffer: Buffer | null = null;
 
   if (process.env.APPLE_PASS_P12_BASE64) {
@@ -49,6 +57,10 @@ function extractCerts() {
   }
 
   if (p12Buffer && wwdrBuffer) {
+    const p12Password = process.env.APPLE_PASS_CERT_PASSWORD;
+    if (!p12Password) {
+      throw new Error('APPLE_PASS_CERT_PASSWORD is required to unlock the .p12 signing certificate.');
+    }
     // Extract using node-forge in memory
     const p12Asn1 = forge.asn1.fromDer(p12Buffer.toString('binary'));
     const p12 = forge.pkcs12.pkcs12FromAsn1(p12Asn1, p12Password);
@@ -92,9 +104,19 @@ export type PassOptions = {
   demo?: boolean;
 };
 
+export type PassCoupon = {
+  id: string;
+  prize_percent: number;
+  guest_name: string | null;
+  expires_at: string;
+  pass_serial?: string | null;
+};
+
+export type PassRestaurant = { name: string | null } | null | undefined;
+
 export async function generatePass(
-  coupon: any,
-  restaurant: any,
+  coupon: PassCoupon,
+  restaurant: PassRestaurant,
   explicitBaseUrl?: string,
   options: PassOptions = {}
 ): Promise<Buffer> {

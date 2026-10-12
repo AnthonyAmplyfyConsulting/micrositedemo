@@ -229,6 +229,13 @@ export default function RedeemPage({ params }: { params: Promise<{ couponId: str
           )}
         </div>
       </div>
+
+      {/* Legal Footer */}
+      <footer className="mt-8 flex items-center gap-3 text-xs text-neutral-400">
+        <a href="/terms" target="_blank" className="hover:text-neutral-600 transition-colors">Terms of Service</a>
+        <span>•</span>
+        <a href="/privacy" target="_blank" className="hover:text-neutral-600 transition-colors">Privacy Policy</a>
+      </footer>
     </main>
   )
 }

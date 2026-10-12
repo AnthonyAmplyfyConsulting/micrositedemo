@@ -1,69 +1,43 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { createServerClient } from '@/lib/supabase/client';
 import { generatePass } from '@/lib/pass/generatePass';
+import { getBaseUrl, isUuid, jsonError, limitByIp } from '@/lib/security/request';
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ couponId: string }> }
-) {
+export const runtime = 'nodejs';
+
+export async function GET(req: NextRequest, { params }: { params: Promise<{ couponId: string }> }) {
   try {
+    // Pass signing is CPU-heavy; throttle to prevent resource exhaustion.
+    const limited = limitByIp(req, 'pass', 20, 10 * 60 * 1000);
+    if (limited) return limited;
+
     const { couponId } = await params;
-    
-    if (!couponId) {
-      return NextResponse.json({ error: 'Missing couponId' }, { status: 400 });
-    }
+    if (!isUuid(couponId)) return jsonError('Coupon not found', 404);
 
     const supabase = createServerClient();
-    const { data: coupon, error: couponError } = await supabase
+    // Select only what the pass needs — never pull restaurant secrets (PIN hash, keys).
+    const { data: coupon } = await supabase
       .from('coupons')
-      .select('*, restaurants(*)')
+      .select('id, prize_percent, guest_name, expires_at, pass_serial, restaurants(name)')
       .eq('id', couponId)
-      .single();
+      .maybeSingle();
 
-    if (couponError || !coupon) {
-      console.error('Coupon fetch error:', couponError);
-      return NextResponse.json({ error: 'Coupon not found in database' }, { status: 404 });
-    }
-
-    const now = new Date();
-    const expiresAt = new Date(coupon.expires_at);
-
-    if (expiresAt < now) {
-      return NextResponse.json({ error: 'Coupon is expired' }, { status: 410 });
-    }
+    if (!coupon) return jsonError('Coupon not found', 404);
+    if (new Date(coupon.expires_at) < new Date()) return jsonError('Coupon is expired', 410);
 
     const restaurant = Array.isArray(coupon.restaurants) ? coupon.restaurants[0] : coupon.restaurants;
-    
-    // Automatically detect the live host from the incoming request (e.g. micrositedemo.vercel.app or custom domain)
-    const host = req.headers.get('x-forwarded-host') || req.headers.get('host');
-    const proto = req.headers.get('x-forwarded-proto') || 'https';
-    const dynamicBaseUrl = host && !host.includes('localhost') 
-      ? `${proto}://${host}` 
-      : (process.env.NEXT_PUBLIC_BASE_URL || 'https://micrositedemo.vercel.app');
+    const passBuffer = await generatePass(coupon, restaurant, getBaseUrl(req));
 
-    try {
-      const passBuffer = await generatePass(coupon, restaurant, dynamicBaseUrl);
-
-      return new Response(new Uint8Array(passBuffer), {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/vnd.apple.pkpass',
-          'Content-Disposition': 'inline',
-          'Cache-Control': 'no-store, no-cache, must-revalidate',
-        },
-      });
-    } catch (passErr: any) {
-      console.error('Pass generation internal error:', passErr);
-      return NextResponse.json({ 
-        error: 'Failed to generate pass',
-        details: passErr?.message || String(passErr)
-      }, { status: 500 });
-    }
-  } catch (error: any) {
-    console.error('Pass route top-level error:', error);
-    return NextResponse.json({ 
-      error: 'Internal server error',
-      details: error?.message || String(error)
-    }, { status: 500 });
+    return new Response(new Uint8Array(passBuffer), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/vnd.apple.pkpass',
+        'Content-Disposition': 'inline; filename="amplyfy-reward.pkpass"',
+        'Cache-Control': 'no-store',
+      },
+    });
+  } catch (error) {
+    console.error('Pass route error:', error instanceof Error ? error.message : error);
+    return jsonError('Failed to generate pass', 500);
   }
 }
