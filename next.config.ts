@@ -51,6 +51,15 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   // Development origins
   allowedDevOrigins: ["192.168.68.163", "192.168.68.163:3000", "localhost:3000"],
+  async redirects() {
+    return [
+      {
+        source: "/play/amplyfy",
+        destination: "/",
+        permanent: false,
+      },
+    ];
+  },
   async headers() {
     return [
       {
