@@ -7,7 +7,9 @@ export const LEGAL = {
   brand: 'Amplyfy',
   /** Registered legal name of the business operating the site. */
   legalEntity: 'Amplyfy Consulting',
-  contactEmail: '[privacy contact email]',
+  contactEmail: 'anthony@amplyfyconsulting.com',
+  secondaryContactEmail: 'johncurtis@amplyfyconsulting.com',
+  contactPhone: '475-731-3866',
   mailingAddress: '[business mailing address]',
   /** State whose law governs the Terms (area codes in the UI suggest Connecticut). */
   governingState: 'Connecticut',

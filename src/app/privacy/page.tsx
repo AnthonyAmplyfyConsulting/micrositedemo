@@ -136,8 +136,13 @@ export default function PrivacyPage() {
           </p>
           <div className="bg-[#140e0a] border border-[#2c2016] p-4 rounded-xl text-xs space-y-1 text-[#d8c8b5]">
             <p><strong>{LEGAL.legalEntity} — Privacy Officer</strong></p>
-            <p>Email: <a href={`mailto:${LEGAL.contactEmail}`} className="text-[#ff8623] hover:underline">{LEGAL.contactEmail}</a></p>
-            <p>Mailing Address: {LEGAL.mailingAddress}</p>
+            <p>
+              Email:{' '}
+              <a href={`mailto:${LEGAL.contactEmail}`} className="text-[#ff8623] hover:underline">{LEGAL.contactEmail}</a>
+              {', '}
+              <a href={`mailto:${LEGAL.secondaryContactEmail}`} className="text-[#ff8623] hover:underline">{LEGAL.secondaryContactEmail}</a>
+            </p>
+            <p>Phone: <a href={`tel:${LEGAL.contactPhone}`} className="text-[#ff8623] hover:underline">{LEGAL.contactPhone}</a></p>
           </div>
         </section>
 

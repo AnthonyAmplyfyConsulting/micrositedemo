@@ -231,10 +231,30 @@ export default function RedeemPage({ params }: { params: Promise<{ couponId: str
       </div>
 
       {/* Legal Footer */}
-      <footer className="mt-8 flex items-center gap-3 text-xs text-neutral-400">
-        <a href="/terms" target="_blank" className="hover:text-neutral-600 transition-colors">Terms of Service</a>
-        <span>•</span>
-        <a href="/privacy" target="_blank" className="hover:text-neutral-600 transition-colors">Privacy Policy</a>
+      <footer className="mt-8 flex flex-col items-center gap-1.5 text-xs text-neutral-400 text-center">
+        <div className="flex items-center gap-3">
+          <a href="/terms" target="_blank" className="hover:text-neutral-600 transition-colors">Terms of Service</a>
+          <span>•</span>
+          <a href="/privacy" target="_blank" className="hover:text-neutral-600 transition-colors">Privacy Policy</a>
+        </div>
+        <div className="text-[11px] leading-relaxed">
+          <div>
+            Contact Us — Email:{' '}
+            <a href="mailto:anthony@amplyfyconsulting.com" className="hover:text-neutral-600 transition-colors underline underline-offset-2">
+              anthony@amplyfyconsulting.com
+            </a>
+            ,{' '}
+            <a href="mailto:johncurtis@amplyfyconsulting.com" className="hover:text-neutral-600 transition-colors underline underline-offset-2">
+              johncurtis@amplyfyconsulting.com
+            </a>
+          </div>
+          <div>
+            Phone:{' '}
+            <a href="tel:475-731-3866" className="hover:text-neutral-600 transition-colors underline underline-offset-2">
+              475-731-3866
+            </a>
+          </div>
+        </div>
       </footer>
     </main>
   )
