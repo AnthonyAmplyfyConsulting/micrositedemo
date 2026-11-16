@@ -55,7 +55,18 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/play/amplyfy",
-        destination: "/",
+        destination: "https://play.amplyfyconsulting.com/",
+        permanent: false,
+      },
+      {
+        source: "/:path*",
+        has: [
+          {
+            type: "host",
+            value: "(.*\\.vercel\\.app)",
+          },
+        ],
+        destination: "https://play.amplyfyconsulting.com/:path*",
         permanent: false,
       },
     ];
